@@ -3,6 +3,7 @@ import os
 import requests # Apache 2.0 License: https://docs.python-requests.org/en/master/
 import shutil
 import subprocess
+import time
 from enum import Enum
 
 class API(Enum):
@@ -25,6 +26,23 @@ def GetProjects(api, api_url, api_user, api_token):
                 return []
 
             json_object = json.loads(request.text)
+
+            project_urls = []
+            project_namespaces = []
+            project_names = []
+            
+            for project in json_object:
+                for key, value in project.items():
+
+                    if project["clone_url"] not in project_urls:
+                        project_urls.append(project["clone_url"])
+                        project_namespaces.append(project["owner"]["login"])
+                        project_names.append(project["name"])
+
+            return [project_urls, project_namespaces, project_names]
+
+
+
 
             project_urls = []
             for project in json_object:
@@ -63,13 +81,18 @@ def GetProjects(api, api_url, api_user, api_token):
             json_object = json.loads(request.text)
 
             project_urls = []
+            project_namespaces = []
+            project_names = []
+            
             for project in json_object:
                 for key, value in project.items():
 
                     if project["http_url_to_repo"] not in project_urls:
                         project_urls.append(project["http_url_to_repo"])
+                        project_namespaces.append(project["namespace"]["path"])
+                        project_names.append(project["path"])
 
-            return project_urls
+            return [project_urls, project_namespaces, project_names]
 
         elif(api == API.GitLab_On_Premise):
             request = requests.get(api_url + "/api/v4/projects?owned=true", headers = {"PRIVATE-TOKEN": f"{api_token}"})
@@ -81,19 +104,29 @@ def GetProjects(api, api_url, api_user, api_token):
             json_object = json.loads(request.text)
 
             project_urls = []
+            project_namespaces = []
+            project_names = []
+            
             for project in json_object:
                 for key, value in project.items():
 
                     if project["http_url_to_repo"] not in project_urls:
                         project_urls.append(project["http_url_to_repo"])
+                        project_namespaces.append(project["namespace"]["path"])
+                        project_names.append(project["path"])
 
-            return project_urls
+            return [project_urls, project_namespaces, project_names]
 
         elif(api == API.Bitbucket):
             print()
 
 def CloneProjects(api, api_url, api_user, api_token):
-    for project_url in GetProjects(api, api_url, api_user, api_token):
+    project_data = GetProjects(api, api_url, api_user, api_token)
+
+    for project_url in project_data[0]:
+        namespace = project_data[1][project_data[0].index(project_url)]
+        project = project_data[2][project_data[0].index(project_url)]
+
         # Add api_user:token@ between https:// and the url
         clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
 
@@ -103,23 +136,31 @@ def CloneProjects(api, api_url, api_user, api_token):
         #else:
         #    clone_url = project_url[0: 7:] + api_user + ":" + api_token + "@" + project_url[7:]
 
-        clone_directory = clone_url[clone_url.rfind('/')+1: clone_url.find('.git'):]
-        subprocess.call(f"git clone {clone_url} ./repositories/{clone_directory}", shell=True)
+        if not os.path.exists("repositories"): os.mkdir("repositories")
+        if not os.path.exists(f"repositories/{namespace}"): os.mkdir(f"repositories/{namespace}")
+
+        subprocess.call(f"git clone {clone_url}", cwd=f"repositories/{namespace}", shell=True)
+        subprocess.call(f"git lfs fetch origin --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+
 
 def MirrorProjects(api, api_url, api_user, api_token):
-    for project_url in GetProjects(api, api_url, api_user, api_token):
-        # Get the project name from the project url.
-        project_name = project_url[project_url.rfind('/')+1: project_url.find('.git'):]
+    project_data = GetProjects(api, api_url, api_user, api_token)
+    for project_url in project_data[0]:
+        namespace = project_data[1][project_data[0].index(project_url)]
+        project = project_data[2][project_data[0].index(project_url)]
 
-        for cloned_directory in os.listdir("./repositories"):
+        if(os.path.exists(f"repositories/{namespace}/{project}")):
+            mirror_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
+            
+            subprocess.call(f"git remote add mirror {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
 
-            if(cloned_directory == project_name):
-                mirror_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
-                # Make this work with Windows. cd is unix only.
-                subprocess.call(f"cd repositories/{cloned_directory} && git remote add mirror {mirror_url} && cd -", shell=True)
-                subprocess.call(f"cd repositories/{cloned_directory} && git push mirror master && cd -", shell=True)
-                subprocess.call(f"cd repositories/{cloned_directory} && git push mirror release && cd -", shell=True)
-                subprocess.call(f"cd repositories/{cloned_directory} && git lfs push --all mirror && cd -", shell=True)
+            # Don't use mirror until I find a cloning method I like that excludes github pull requests, which cause mirror to fail.
+            # subprocess.call(f"git push --mirror mirror", cwd=f"repositories/{namespace}/{project}", shell=True)
+            
+            subprocess.call(f"git push -u mirror --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+            subprocess.call(f"git push -u mirror --tags", cwd=f"repositories/{namespace}/{project}", shell=True)
+            #subprocess.call(f"git lfs push mirror --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+                    
 
 def MirrorCreateProjects(api, api_url, api_user, api_token):
     print("MirrorCreateProjects() is not implemented.")
@@ -136,5 +177,6 @@ def MirrorProject():
     print("MirrorProject() is not implemented.")
 
 def Cleanup():
+    time.sleep(5)
     if os.path.exists("repositories/"):
         shutil.rmtree("repositories/")
