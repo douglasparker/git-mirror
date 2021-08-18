@@ -41,18 +41,6 @@ def GetProjects(api, api_url, api_user, api_token):
 
             return [project_urls, project_namespaces, project_names]
 
-
-
-
-            project_urls = []
-            for project in json_object:
-                for key, value in project.items():
-
-                    if project["clone_url"] not in project_urls:
-                        project_urls.append(project["clone_url"])
-
-            return project_urls
-
         elif(api == API.GitHub_Enterprise):
             request = requests.get(api_url + "/user/repos", headers = {"Authorization": f"token {api_token}"})
 
@@ -63,13 +51,18 @@ def GetProjects(api, api_url, api_user, api_token):
             json_object = json.loads(request.text)
 
             project_urls = []
+            project_namespaces = []
+            project_names = []
+            
             for project in json_object:
                 for key, value in project.items():
 
                     if project["clone_url"] not in project_urls:
                         project_urls.append(project["clone_url"])
+                        project_namespaces.append(project["owner"]["login"])
+                        project_names.append(project["name"])
 
-            return project_urls
+            return [project_urls, project_namespaces, project_names]
 
         elif(api == API.GitLab):
             request = requests.get("https://gitlab.com/api/v4/projects?owned=true", headers = {"PRIVATE-TOKEN": f"{api_token}"})
@@ -156,7 +149,7 @@ def MirrorProjects(api, api_url, api_user, api_token):
 
             # Don't use mirror until I find a cloning method I like that excludes github pull requests, which cause mirror to fail.
             # subprocess.call(f"git push --mirror mirror", cwd=f"repositories/{namespace}/{project}", shell=True)
-            
+
             subprocess.call(f"git push -u mirror --all", cwd=f"repositories/{namespace}/{project}", shell=True)
             subprocess.call(f"git push -u mirror --tags", cwd=f"repositories/{namespace}/{project}", shell=True)
             #subprocess.call(f"git lfs push mirror --all", cwd=f"repositories/{namespace}/{project}", shell=True)
@@ -177,6 +170,5 @@ def MirrorProject():
     print("MirrorProject() is not implemented.")
 
 def Cleanup():
-    time.sleep(5)
     if os.path.exists("repositories/"):
         shutil.rmtree("repositories/")
