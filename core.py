@@ -35,7 +35,7 @@ def GetProjects(api, api_url, api_user, api_token):
     if not isinstance(api, API):
         raise TypeError("Type Error: api must be of type: API(Enum)")
         exit(1)
-        
+
     else:
         if(api == API.GitHub):
             request = requests.get("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"})
@@ -216,14 +216,14 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                     print("HTTP Response: " + request.text)
 
+                    if request.status_code == 401:
+                        exit(1)
+
                     if request.status_code == 404:
                         request = requests.post(f"https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
                         
                         print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                         print("HTTP Response: " + request.text)
-
-                    if request.status_code == 401:
-                        exit(1)
                 
                 elif(api == API.GitHub_Enterprise):
                     request = requests.post(api_url + f"/orgs/{namespace}/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "org": f"{namespace}", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
@@ -231,14 +231,14 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                     print("HTTP Response: " + request.text)
 
+                    if request.status_code == 401:
+                        exit(1)
+
                     if request.status_code == 404:
                         request = requests.post(api_url + f"/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
                         
                         print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                         print("HTTP Response: " + request.text)
-
-                    if request.status_code == 401:
-                        exit(1)
                     
                 elif(api == API.GitLab):
                     request = requests.get(f"https://gitlab.com/api/v4/namespaces?search={namespace}", headers = {"PRIVATE-TOKEN": f"{api_token}"})
