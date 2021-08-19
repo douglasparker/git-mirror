@@ -16,16 +16,17 @@ class API(Enum):
     Bitbucket = 5
 
 def GetProjects(api, api_url, api_user, api_token):
-    # Return array of project ids
     if not isinstance(api, API):
-        raise TypeError("TypeError: api must be of type: API(Enum)")
+        raise TypeError("Type Error: api must be of type: API(Enum)")
         exit(1)
     else:
         if(api == API.GitHub):
             request = requests.get("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"})
 
+            print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+            print("HTTP Response: " + request.text)
+
             if request.status_code == 401:
-                print("HTTP Status: " + str(request.status_code))
                 exit(1)
 
             json_object = json.loads(request.text)
@@ -47,8 +48,10 @@ def GetProjects(api, api_url, api_user, api_token):
         elif(api == API.GitHub_Enterprise):
             request = requests.get(api_url + "/user/repos", headers = {"Authorization": f"token {api_token}"})
 
+            print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+            print("HTTP Response: " + request.text)
+
             if request.status_code == 401:
-                print("HTTP Status: " + str(request.status_code))
                 exit(1)
 
             json_object = json.loads(request.text)
@@ -70,8 +73,10 @@ def GetProjects(api, api_url, api_user, api_token):
         elif(api == API.GitLab):
             request = requests.get("https://gitlab.com/api/v4/projects?owned=true", headers = {"PRIVATE-TOKEN": f"{api_token}"})
 
+            print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+            print("HTTP Response: " + request.text)
+
             if request.status_code == 401:
-                print("HTTP Status: " + str(request.status_code))
                 exit(1)
 
             json_object = json.loads(request.text)
@@ -93,9 +98,11 @@ def GetProjects(api, api_url, api_user, api_token):
         elif(api == API.GitLab_On_Premise):
             request = requests.get(api_url + "/api/v4/projects?owned=true", headers = {"PRIVATE-TOKEN": f"{api_token}"})
 
+            print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+            print("HTTP Response: " + request.text)
+
             if request.status_code == 401:
-                print("HTTP Status: " + str(request.status_code))
-                return []
+                exit(1)
 
             json_object = json.loads(request.text)
 
@@ -114,29 +121,33 @@ def GetProjects(api, api_url, api_user, api_token):
             return [project_urls, project_namespaces, project_names]
 
         elif(api == API.Bitbucket):
-            print()
+            print("Bitbucket is not currently supported.")
 
 def CloneProjects(api, api_url, api_user, api_token):
-    project_data = GetProjects(api, api_url, api_user, api_token)
+    if not isinstance(api, API):
+        raise TypeError("Type Error: api must be of type: API(Enum)")
+        exit(1)
+    else:
+        project_data = GetProjects(api, api_url, api_user, api_token)
 
-    for project_url in project_data[0]:
-            namespace = project_data[1][project_data[0].index(project_url)]
-            project = project_data[2][project_data[0].index(project_url)]
+        for project_url in project_data[0]:
+                namespace = project_data[1][project_data[0].index(project_url)]
+                project = project_data[2][project_data[0].index(project_url)]
 
-            # Add api_user:token@ between https:// and the url
-            clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
+                # Add api_user:token@ between https:// and the url
+                clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
 
-            # WIP: Fix this
-            #if project_url.find("https://"):
-            #    clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
-            #else:
-            #    clone_url = project_url[0: 7:] + api_user + ":" + api_token + "@" + project_url[7:]
+                # WIP: Fix this
+                #if project_url.find("https://"):
+                #    clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
+                #else:
+                #    clone_url = project_url[0: 7:] + api_user + ":" + api_token + "@" + project_url[7:]
 
-            if not os.path.exists("repositories"): os.mkdir("repositories")
-            if not os.path.exists(f"repositories/{namespace}"): os.mkdir(f"repositories/{namespace}")
+                if not os.path.exists("repositories"): os.mkdir("repositories")
+                if not os.path.exists(f"repositories/{namespace}"): os.mkdir(f"repositories/{namespace}")
 
-            subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
-            subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+                subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
+                subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
 
 def CreateMirrorProjects(api, api_url, api_user, api_token):
     if not isinstance(api, API):
@@ -150,11 +161,13 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                 
                 if(api == API.GitHub):
                     request = requests.post(f"https://api.github.com/orgs/{namespace}/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "org": f"{namespace}", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                    
                     print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 404:
                         request = requests.post(f"https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                        
                         print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                         print("HTTP Response: " + request.text)
 
@@ -163,11 +176,13 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                 
                 elif(api == API.GitHub_Enterprise):
                     request = requests.post(api_url + f"/orgs/{namespace}/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "org": f"{namespace}", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                    
                     print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 404:
                         request = requests.post(api_url + f"/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                        
                         print("HTTP Status: " + str(request.status_code) + " - " + request.url)
                         print("HTTP Response: " + request.text)
 
@@ -177,8 +192,10 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                 elif(api == API.GitLab):
                     request = requests.get(f"https://gitlab.com/api/v4/namespaces?search={namespace}", headers = {"PRIVATE-TOKEN": f"{api_token}"})
 
+                    print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                    print("HTTP Response: " + request.text)
+
                     if request.status_code == 401:
-                        print("HTTP Status: " + str(request.status_code))
                         exit(1)
 
                     json_object = json.loads(request.text)
@@ -188,17 +205,20 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                             namespace_id = user["id"]
 
                     request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "visibility": "private", "lfs_enabled": "true"})
-                    
-                    print(request.text)
+
+                    print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                    print("HTTP Response: " + request.text)
+
                     if request.status_code == 401:
-                        print("HTTP Status: " + str(request.status_code))
                         exit(1)
 
                 elif(api == API.GitLab_On_Premise):
                     request = requests.get(api_url + f"/api/v4/namespaces?search={namespace}", headers = {"PRIVATE-TOKEN": f"{api_token}"})
 
+                    print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                    print("HTTP Response: " + request.text)
+
                     if request.status_code == 401:
-                        print("HTTP Status: " + str(request.status_code))
                         exit(1)
 
                     json_object = json.loads(request.text)
@@ -209,27 +229,32 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
 
                     request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "visibility": "private", "lfs_enabled": "true"})
                     
-                    print(request.text)
+                    print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                    print("HTTP Response: " + request.text)
+
                     if request.status_code == 401:
-                        print("HTTP Status: " + str(request.status_code))
                         exit(1)
 
                 elif(api == API.Bitbucket):
-                    print()
+                    print("Bitbucket is not currently supported.")
 
 def MirrorProjects(api, api_url, api_user, api_token):
-    project_data = GetProjects(api, api_url, api_user, api_token)
-    for project_url in project_data[0]:
-        namespace = project_data[1][project_data[0].index(project_url)]
-        project = project_data[2][project_data[0].index(project_url)]
+    if not isinstance(api, API):
+        raise TypeError("Type Error: api must be of type: API(Enum)")
+        exit(1)
+    else:
+        project_data = GetProjects(api, api_url, api_user, api_token)
+        for project_url in project_data[0]:
+            namespace = project_data[1][project_data[0].index(project_url)]
+            project = project_data[2][project_data[0].index(project_url)]
 
-        if(os.path.exists(f"repositories/{namespace}/{project}")):
-            
-            mirror_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
+            if(os.path.exists(f"repositories/{namespace}/{project}")):
+                
+                mirror_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
 
-            # Push LFS objects first, or pushing the mirror will fail.
-            subprocess.call(f"git lfs push --all {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
-            subprocess.call(f"git push --mirror {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
+                # Push LFS objects first, or pushing the mirror will fail.
+                subprocess.call(f"git lfs push --all {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
+                subprocess.call(f"git push --mirror {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
 
 def GetProject(api, url):
     # Return array of project http_url_to_repo (json)
