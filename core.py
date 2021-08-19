@@ -120,23 +120,23 @@ def CloneProjects(api, api_url, api_user, api_token):
     project_data = GetProjects(api, api_url, api_user, api_token)
 
     for project_url in project_data[0]:
-        namespace = project_data[1][project_data[0].index(project_url)]
-        project = project_data[2][project_data[0].index(project_url)]
+            namespace = project_data[1][project_data[0].index(project_url)]
+            project = project_data[2][project_data[0].index(project_url)]
 
-        # Add api_user:token@ between https:// and the url
-        clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
+            # Add api_user:token@ between https:// and the url
+            clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
 
-        # WIP: Fix this
-        #if project_url.find("https://"):
-        #    clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
-        #else:
-        #    clone_url = project_url[0: 7:] + api_user + ":" + api_token + "@" + project_url[7:]
+            # WIP: Fix this
+            #if project_url.find("https://"):
+            #    clone_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
+            #else:
+            #    clone_url = project_url[0: 7:] + api_user + ":" + api_token + "@" + project_url[7:]
 
-        if not os.path.exists("repositories"): os.mkdir("repositories")
-        if not os.path.exists(f"repositories/{namespace}"): os.mkdir(f"repositories/{namespace}")
+            if not os.path.exists("repositories"): os.mkdir("repositories")
+            if not os.path.exists(f"repositories/{namespace}"): os.mkdir(f"repositories/{namespace}")
 
-        subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
-        subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+            subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
+            subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
 
 def CreateMirrorProjects(api, api_url, api_user, api_token):
     if not isinstance(api, API):
@@ -149,17 +149,29 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                 project = project.name
                 
                 if(api == API.GitHub):
-                    request = requests.post("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"})
+                    request = requests.post(f"https://api.github.com/orgs/{namespace}/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "org": f"{namespace}", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                    print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                    print("HTTP Response: " + request.text)
+
+                    if request.status_code == 404:
+                        request = requests.post(f"https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                        print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                        print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        print("HTTP Status: " + str(request.status_code))
                         exit(1)
                 
                 elif(api == API.GitHub_Enterprise):
-                    request = requests.post(api_url + "/user/repos", headers = {"Authorization": f"token {api_token}"})
+                    request = requests.post(api_url + f"/orgs/{namespace}/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "org": f"{namespace}", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                    print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                    print("HTTP Response: " + request.text)
+
+                    if request.status_code == 404:
+                        request = requests.post(api_url + f"/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
+                        print("HTTP Status: " + str(request.status_code) + " - " + request.url)
+                        print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        print("HTTP Status: " + str(request.status_code))
                         exit(1)
                     
                 elif(api == API.GitLab):
@@ -204,13 +216,6 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
 
                 elif(api == API.Bitbucket):
                     print()
-
-        # Loop namespace by folder.
-            # Loop projects by folder
-                # Create project
-                    # POST /projects (https://docs.gitlab.com/ee/api/projects.html#create-project)
-                    # path
-                    # namespace_id
 
 def MirrorProjects(api, api_url, api_user, api_token):
     project_data = GetProjects(api, api_url, api_user, api_token)
