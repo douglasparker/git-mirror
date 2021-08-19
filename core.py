@@ -16,25 +16,26 @@ class API(Enum):
     Bitbucket = 5
 
 def GetProjects(api, api_url, api_user, api_token):
+    print(f"  Getting Projects  from {api.name}...")
     if not api:
         print("Error: An API endpoint must be configured.")
-        exit(1)
+        return 1
     
-    if api and not api_url:
+    if api is API.GitHub_Enterprise and not api_url or api is API.GitLab_On_Premise and not api_url:
         print("An API URL must be configured for the specified API endpoint.")
-        exit(1)
+        return 1
 
     if not api_user:
         print("Error: A user must be configured for the specified API endpoint.")
-        exit(1)
+        return 1
     
     if not api_token:
         print("Error: An API token must be configured for the specified API endpoint.")
-        exit(1)
+        return 1
 
     if not isinstance(api, API):
         raise TypeError("Type Error: api must be of type: API(Enum)")
-        exit(1)
+        return 1
 
     else:
         if(api == API.GitHub):
@@ -44,7 +45,7 @@ def GetProjects(api, api_url, api_user, api_token):
             print("HTTP Response: " + request.text)
 
             if request.status_code == 401:
-                exit(1)
+                return 1
 
             json_object = json.loads(request.text)
 
@@ -69,7 +70,7 @@ def GetProjects(api, api_url, api_user, api_token):
             print("HTTP Response: " + request.text)
 
             if request.status_code == 401:
-                exit(1)
+                return 1
 
             json_object = json.loads(request.text)
 
@@ -94,7 +95,7 @@ def GetProjects(api, api_url, api_user, api_token):
             print("HTTP Response: " + request.text)
 
             if request.status_code == 401:
-                exit(1)
+                return 1
 
             json_object = json.loads(request.text)
 
@@ -119,7 +120,7 @@ def GetProjects(api, api_url, api_user, api_token):
             print("HTTP Response: " + request.text)
 
             if request.status_code == 401:
-                exit(1)
+                return 1
 
             json_object = json.loads(request.text)
 
@@ -140,26 +141,31 @@ def GetProjects(api, api_url, api_user, api_token):
         elif(api == API.Bitbucket):
             print("Bitbucket is not currently supported.")
 
-def CloneProjects(api, api_url, api_user, api_token):
+def CloneProjects(api, api_url, api_user, api_token, api_enabled):
+    print(f"Cloning Projects from {api.name}...")
+    if not api_enabled:
+        print("  [Info]: This API endpoint is disabled.")
+        return 0
+
     if not api:
-        print("Error: An API endpoint must be configured.")
-        exit(1)
+        print("  [Error]: An API endpoint must be configured.")
+        return 1
     
-    if api and not api_url:
-        print("An API URL must be configured for the specified API endpoint.")
-        exit(1)
+    if api is API.GitHub_Enterprise and not api_url or api is API.GitLab_On_Premise and not api_url:
+        print("  [Error]: An API URL must be configured for the specified API endpoint.")
+        return 1
 
     if not api_user:
-        print("Error: A user must be configured for the specified API endpoint.")
-        exit(1)
+        print("  [Error]: A user must be configured for the specified API endpoint.")
+        return 1
     
     if not api_token:
-        print("Error: An API token must be configured for the specified API endpoint.")
-        exit(1)
+        print("  [Error]: An API token must be configured for the specified API endpoint.")
+        return 1
 
     if not isinstance(api, API):
-        raise TypeError("Type Error: api must be of type: API(Enum)")
-        exit(1)
+        raise TypeError("  [Error]: api must be of type: API(Enum)")
+        return 1
 
     else:
         project_data = GetProjects(api, api_url, api_user, api_token)
@@ -183,26 +189,31 @@ def CloneProjects(api, api_url, api_user, api_token):
                 subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
                 subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
 
-def CreateMirrorProjects(api, api_url, api_user, api_token):
+def CreateMirrorProjects(api, api_url, api_user, api_token, api_enabled):
+    print(f"Creating Mirror Projects for {api.name}...")
+    if not api_enabled:
+        print("  [Info]: This API endpoint is disabled.")
+        return 0
+
     if not api:
-        print("Error: An API endpoint must be configured.")
-        exit(1)
+        print("  [Error]: An API endpoint must be configured.")
+        return 1
     
-    if api and not api_url:
-        print("An API URL must be configured for the specified API endpoint.")
-        exit(1)
+    if api is API.GitHub_Enterprise and not api_url or api is API.GitLab_On_Premise and not api_url:
+        print("  [Error]: An API URL must be configured for the specified API endpoint.")
+        return 1
 
     if not api_user:
-        print("Error: A user must be configured for the specified API endpoint.")
-        exit(1)
+        print("  [Error]: A user must be configured for the specified API endpoint.")
+        return 1
     
     if not api_token:
-        print("Error: An API token must be configured for the specified API endpoint.")
-        exit(1)
+        print("  [Error]: An API token must be configured for the specified API endpoint.")
+        return 1
 
     if not isinstance(api, API):
         raise TypeError("Type Error: api must be of type: API(Enum)")
-        exit(1)
+        return 1
 
     else:
         for namespace in os.scandir("repositories/"):
@@ -217,7 +228,7 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        exit(1)
+                        return 1
 
                     if request.status_code == 404:
                         request = requests.post(f"https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
@@ -232,7 +243,7 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        exit(1)
+                        return 1
 
                     if request.status_code == 404:
                         request = requests.post(api_url + f"/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"name": f"{project}", "description": "", "private": "true", "has_issues": "false", "has_projects": "false", "has_wiki": "false"}))
@@ -247,7 +258,7 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        exit(1)
+                        return 1
 
                     json_object = json.loads(request.text)
                     
@@ -261,7 +272,7 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        exit(1)
+                        return 1
 
                 elif(api == API.GitLab_On_Premise):
                     request = requests.get(api_url + f"/api/v4/namespaces?search={namespace}", headers = {"PRIVATE-TOKEN": f"{api_token}"})
@@ -270,7 +281,7 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        exit(1)
+                        return 1
 
                     json_object = json.loads(request.text)
                     
@@ -284,31 +295,36 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("HTTP Response: " + request.text)
 
                     if request.status_code == 401:
-                        exit(1)
+                        return 1
 
                 elif(api == API.Bitbucket):
                     print("Bitbucket is not currently supported.")
 
-def MirrorProjects(api, api_url, api_user, api_token):
+def MirrorProjects(api, api_url, api_user, api_token, api_enabled):
+    print(f"Mirroring Projects for {api.name}...")
+    if not api_enabled:
+        print("  [Info]: This API endpoint is disabled.")
+        return 0
+
     if not api:
-        print("Error: An API endpoint must be configured.")
-        exit(1)
+        print("  [Error]: An API endpoint must be configured.")
+        return 1
     
-    if api and not api_url:
-        print("An API URL must be configured for the specified API endpoint.")
-        exit(1)
+    if api is API.GitHub_Enterprise and not api_url or api is API.GitLab_On_Premise and not api_url:
+        print("  [Error]: An API URL must be configured for the specified API endpoint.")
+        return 1
 
     if not api_user:
-        print("Error: A user must be configured for the specified API endpoint.")
-        exit(1)
+        print("  [Error]: A user must be configured for the specified API endpoint.")
+        return 1
     
     if not api_token:
-        print("Error: An API token must be configured for the specified API endpoint.")
-        exit(1)
+        print("  [Error]: An API token must be configured for the specified API endpoint.")
+        return 1
 
     if not isinstance(api, API):
-        raise TypeError("Type Error: api must be of type: API(Enum)")
-        exit(1)
+        raise TypeError("  [Error]: api must be of type: API(Enum)")
+        return 1
 
     else:
         project_data = GetProjects(api, api_url, api_user, api_token)
