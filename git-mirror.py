@@ -13,9 +13,11 @@ if not os.path.isfile("cfg.py"):
     exit(1)
 
 import cfg as configuration
-from core import API, CloneProjects, MirrorProjects, Cleanup
+from core import API, CloneProjects, CreateMirrorProjects, MirrorProjects, Cleanup
 
 CloneProjects(configuration.source_api, configuration.source_api_url, configuration.source_api_user, configuration.source_api_access_token)
+
+CreateMirrorProjects(configuration.mirror_api, configuration.mirror_api_url, configuration.mirror_api_user, configuration.mirror_api_access_token)
 
 MirrorProjects(configuration.mirror_api, configuration.mirror_api_url, configuration.mirror_api_user, configuration.mirror_api_access_token)
 
