@@ -17,13 +17,14 @@ def GetProjects(api, api_url, api_user, api_token):
     # Return array of project ids
     if not isinstance(api, API):
         raise TypeError("TypeError: api must be of type: API(Enum)")
+        exit(1)
     else:
         if(api == API.GitHub):
             request = requests.get("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"})
 
             if request.status_code == 401:
                 print("HTTP Status: " + str(request.status_code))
-                return []
+                exit(1)
 
             json_object = json.loads(request.text)
 
@@ -46,7 +47,7 @@ def GetProjects(api, api_url, api_user, api_token):
 
             if request.status_code == 401:
                 print("HTTP Status: " + str(request.status_code))
-                return []
+                exit(1)
 
             json_object = json.loads(request.text)
 
@@ -69,7 +70,7 @@ def GetProjects(api, api_url, api_user, api_token):
 
             if request.status_code == 401:
                 print("HTTP Status: " + str(request.status_code))
-                return []
+                exit(1)
 
             json_object = json.loads(request.text)
 
