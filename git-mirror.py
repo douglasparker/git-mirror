@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 
 import json
+import os
 import requests # Apache 2.0 License: https://docs.python-requests.org/en/master/
+import shutil
 import subprocess
 from enum import Enum
+
+if not os.path.isfile("cfg.py"):
+    shutil.copy("cfg.template.py", "cfg.py")
+    print("A configuration file was created. Please edit this file and then rerun the program.")
+    exit(1)
+
+import cfg as configuration
 from core import API, CloneProjects, MirrorProjects, Cleanup
 
-source_api = API.GitHub
-source_api_url = ""
-source_api_user = ""
-source_api_access_token = ""
+CloneProjects(configuration.source_api, configuration.source_api_url, configuration.source_api_user, configuration.source_api_access_token)
 
-mirror_api = API.GitLab
-mirror_api_url = ""
-mirror_api_user = ""
-mirror_api_access_token = ""
-
-CloneProjects(source_api, source_api_url, source_api_user, source_api_access_token)
-
-MirrorProjects(mirror_api, mirror_api_url, mirror_api_user, mirror_api_access_token)
+MirrorProjects(configuration.mirror_api, configuration.mirror_api_url, configuration.mirror_api_user, configuration.mirror_api_access_token)
 
 Cleanup()
