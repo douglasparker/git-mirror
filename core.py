@@ -132,8 +132,8 @@ def CloneProjects(api, api_url, api_user, api_token):
         if not os.path.exists("repositories"): os.mkdir("repositories")
         if not os.path.exists(f"repositories/{namespace}"): os.mkdir(f"repositories/{namespace}")
 
-        subprocess.call(f"git clone {clone_url}", cwd=f"repositories/{namespace}", shell=True)
-        subprocess.call(f"git lfs fetch origin --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+        subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
+        subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
 
 
 def MirrorProjects(api, api_url, api_user, api_token):
@@ -143,16 +143,13 @@ def MirrorProjects(api, api_url, api_user, api_token):
         project = project_data[2][project_data[0].index(project_url)]
 
         if(os.path.exists(f"repositories/{namespace}/{project}")):
-            mirror_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
             
-            subprocess.call(f"git remote add mirror {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
+            mirror_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
 
-            # Don't use mirror until I find a cloning method I like that excludes github pull requests, which cause mirror to fail.
-            # subprocess.call(f"git push --mirror mirror", cwd=f"repositories/{namespace}/{project}", shell=True)
-
-            subprocess.call(f"git push -u mirror --all", cwd=f"repositories/{namespace}/{project}", shell=True)
-            subprocess.call(f"git push -u mirror --tags", cwd=f"repositories/{namespace}/{project}", shell=True)
-            #subprocess.call(f"git lfs push mirror --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+            # Push LFS objects first, or pushing the mirror will fail.
+            subprocess.call(f"git lfs push --all {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
+            subprocess.call(f"git push --mirror {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
+                
                     
 
 def MirrorCreateProjects(api, api_url, api_user, api_token):
