@@ -175,7 +175,7 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                         for key, value in user.items():
                             namespace_id = user["id"]
 
-                    request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "lfs_enabled": "true"})
+                    request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "visibility": "private", "lfs_enabled": "true"})
                     
                     print(request.text)
                     if request.status_code == 401:
@@ -195,7 +195,7 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                         for key, value in user.items():
                             namespace_id = user["id"]
 
-                    request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "lfs_enabled": "true"})
+                    request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "visibility": "private", "lfs_enabled": "true"})
                     
                     print(request.text)
                     if request.status_code == 401:
