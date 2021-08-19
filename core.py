@@ -16,9 +16,26 @@ class API(Enum):
     Bitbucket = 5
 
 def GetProjects(api, api_url, api_user, api_token):
+    if not api:
+        print("Error: An API endpoint must be configured.")
+        exit(1)
+    
+    if api and not api_url:
+        print("An API URL must be configured for the specified API endpoint.")
+        exit(1)
+
+    if not api_user:
+        print("Error: A user must be configured for the specified API endpoint.")
+        exit(1)
+    
+    if not api_token:
+        print("Error: An API token must be configured for the specified API endpoint.")
+        exit(1)
+
     if not isinstance(api, API):
         raise TypeError("Type Error: api must be of type: API(Enum)")
         exit(1)
+        
     else:
         if(api == API.GitHub):
             request = requests.get("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"})
@@ -124,9 +141,26 @@ def GetProjects(api, api_url, api_user, api_token):
             print("Bitbucket is not currently supported.")
 
 def CloneProjects(api, api_url, api_user, api_token):
+    if not api:
+        print("Error: An API endpoint must be configured.")
+        exit(1)
+    
+    if api and not api_url:
+        print("An API URL must be configured for the specified API endpoint.")
+        exit(1)
+
+    if not api_user:
+        print("Error: A user must be configured for the specified API endpoint.")
+        exit(1)
+    
+    if not api_token:
+        print("Error: An API token must be configured for the specified API endpoint.")
+        exit(1)
+
     if not isinstance(api, API):
         raise TypeError("Type Error: api must be of type: API(Enum)")
         exit(1)
+
     else:
         project_data = GetProjects(api, api_url, api_user, api_token)
 
@@ -150,9 +184,26 @@ def CloneProjects(api, api_url, api_user, api_token):
                 subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
 
 def CreateMirrorProjects(api, api_url, api_user, api_token):
-    if not isinstance(api, API):
-        raise TypeError("TypeError: api must be of type: API(Enum)")
+    if not api:
+        print("Error: An API endpoint must be configured.")
         exit(1)
+    
+    if api and not api_url:
+        print("An API URL must be configured for the specified API endpoint.")
+        exit(1)
+
+    if not api_user:
+        print("Error: A user must be configured for the specified API endpoint.")
+        exit(1)
+    
+    if not api_token:
+        print("Error: An API token must be configured for the specified API endpoint.")
+        exit(1)
+
+    if not isinstance(api, API):
+        raise TypeError("Type Error: api must be of type: API(Enum)")
+        exit(1)
+
     else:
         for namespace in os.scandir("repositories/"):
             namespace = namespace.name
@@ -239,9 +290,26 @@ def CreateMirrorProjects(api, api_url, api_user, api_token):
                     print("Bitbucket is not currently supported.")
 
 def MirrorProjects(api, api_url, api_user, api_token):
+    if not api:
+        print("Error: An API endpoint must be configured.")
+        exit(1)
+    
+    if api and not api_url:
+        print("An API URL must be configured for the specified API endpoint.")
+        exit(1)
+
+    if not api_user:
+        print("Error: A user must be configured for the specified API endpoint.")
+        exit(1)
+    
+    if not api_token:
+        print("Error: An API token must be configured for the specified API endpoint.")
+        exit(1)
+
     if not isinstance(api, API):
         raise TypeError("Type Error: api must be of type: API(Enum)")
         exit(1)
+
     else:
         project_data = GetProjects(api, api_url, api_user, api_token)
         for project_url in project_data[0]:
