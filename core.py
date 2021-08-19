@@ -141,11 +141,8 @@ def GetProjects(api, api_url, api_user, api_token):
         elif(api == API.Bitbucket):
             print("Bitbucket is not currently supported.")
 
-def CloneProjects(api, api_url, api_user, api_token, api_enabled):
+def CloneProjects(api, api_url, api_user, api_token):
     print(f"Cloning Projects from {api.name}...")
-    if not api_enabled:
-        print("  [Info]: This API endpoint is disabled.")
-        return 0
 
     if not api:
         print("  [Error]: An API endpoint must be configured.")
