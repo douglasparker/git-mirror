@@ -6,6 +6,8 @@ import subprocess
 import time
 from enum import Enum
 
+from requests.models import Response
+
 class API(Enum):
     GitHub = 1
     GitHub_Enterprise = 2
@@ -136,6 +138,79 @@ def CloneProjects(api, api_url, api_user, api_token):
         subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
         subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
 
+def CreateMirrorProjects(api, api_url, api_user, api_token):
+    if not isinstance(api, API):
+        raise TypeError("TypeError: api must be of type: API(Enum)")
+        exit(1)
+    else:
+        for namespace in os.scandir("repositories/"):
+            namespace = namespace.name
+            for project in os.scandir(f"repositories/{namespace}"):
+                project = project.name
+                
+                if(api == API.GitHub):
+                    request = requests.post("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"})
+
+                    if request.status_code == 401:
+                        print("HTTP Status: " + str(request.status_code))
+                        exit(1)
+                
+                elif(api == API.GitHub_Enterprise):
+                    request = requests.post(api_url + "/user/repos", headers = {"Authorization": f"token {api_token}"})
+
+                    if request.status_code == 401:
+                        print("HTTP Status: " + str(request.status_code))
+                        exit(1)
+                    
+                elif(api == API.GitLab):
+                    request = requests.get(f"https://gitlab.com/api/v4/namespaces?search={namespace}", headers = {"PRIVATE-TOKEN": f"{api_token}"})
+
+                    if request.status_code == 401:
+                        print("HTTP Status: " + str(request.status_code))
+                        exit(1)
+
+                    json_object = json.loads(request.text)
+                    
+                    for user in json_object:
+                        for key, value in user.items():
+                            namespace_id = user["id"]
+
+                    request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "lfs_enabled": "true"})
+                    
+                    print(request.text)
+                    if request.status_code == 401:
+                        print("HTTP Status: " + str(request.status_code))
+                        exit(1)
+
+                elif(api == API.GitLab_On_Premise):
+                    request = requests.get(api_url + f"/api/v4/namespaces?search={namespace}", headers = {"PRIVATE-TOKEN": f"{api_token}"})
+
+                    if request.status_code == 401:
+                        print("HTTP Status: " + str(request.status_code))
+                        exit(1)
+
+                    json_object = json.loads(request.text)
+                    
+                    for user in json_object:
+                        for key, value in user.items():
+                            namespace_id = user["id"]
+
+                    request = requests.post("https://gitlab.com/api/v4/projects", headers = {"PRIVATE-TOKEN": f"{api_token}"}, data = {"path": f"{project}", "namespace_id": f"{namespace_id}", "lfs_enabled": "true"})
+                    
+                    print(request.text)
+                    if request.status_code == 401:
+                        print("HTTP Status: " + str(request.status_code))
+                        exit(1)
+
+                elif(api == API.Bitbucket):
+                    print()
+
+        # Loop namespace by folder.
+            # Loop projects by folder
+                # Create project
+                    # POST /projects (https://docs.gitlab.com/ee/api/projects.html#create-project)
+                    # path
+                    # namespace_id
 
 def MirrorProjects(api, api_url, api_user, api_token):
     project_data = GetProjects(api, api_url, api_user, api_token)
@@ -150,11 +225,6 @@ def MirrorProjects(api, api_url, api_user, api_token):
             # Push LFS objects first, or pushing the mirror will fail.
             subprocess.call(f"git lfs push --all {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
             subprocess.call(f"git push --mirror {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
-                
-                    
-
-def MirrorCreateProjects(api, api_url, api_user, api_token):
-    print("MirrorCreateProjects() is not implemented.")
 
 def GetProject(api, url):
     # Return array of project http_url_to_repo (json)
