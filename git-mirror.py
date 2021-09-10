@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 
+from enum import Enum
+
 import json
 import os
 import requests # Apache 2.0 License: https://docs.python-requests.org/en/master/
 import shutil
 import subprocess
-from enum import Enum
 
-if not os.path.isfile("cfg.py"):
-    shutil.copy("cfg.template.py", "cfg.py")
+import cfg as configuration
+
+if not os.path.isfile(f"{configuration.app_directory}/cfg.py"):
+    shutil.copy(f"{configuration.app_directory}/cfg.template.py", f"{configuration.app_directory}/cfg.py")
     print("A configuration file was created. Please edit this file and then rerun the program.")
     exit(1)
 
-import cfg as configuration
+
 from core import API, CloneProjects, CreateMirrorProjects, MirrorProjects, Cleanup
 
 CloneProjects(configuration.source_api, configuration.source_api_url, configuration.source_api_user, configuration.source_api_access_token)
