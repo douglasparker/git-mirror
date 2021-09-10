@@ -41,7 +41,7 @@ def GetProjects(api, api_url, api_user, api_token):
 
     else:
         if(api == API.GitHub):
-            request = requests.get("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"})
+            request = requests.get("https://api.github.com/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"per_page": 100}))
 
             print("HTTP Status: " + str(request.status_code) + " - " + request.url)
             print("HTTP Response: " + request.text)
@@ -66,7 +66,7 @@ def GetProjects(api, api_url, api_user, api_token):
             return [project_urls, project_namespaces, project_names]
 
         elif(api == API.GitHub_Enterprise):
-            request = requests.get(api_url + "/user/repos", headers = {"Authorization": f"token {api_token}"})
+            request = requests.get(api_url + "/user/repos", headers = {"Authorization": f"token {api_token}"}, data = json.dumps({"per_page": 100}))
 
             print("HTTP Status: " + str(request.status_code) + " - " + request.url)
             print("HTTP Response: " + request.text)
