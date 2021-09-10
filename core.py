@@ -1,12 +1,14 @@
+from enum import Enum
+from requests.models import Response
+
 import json
 import os
 import requests # Apache 2.0 License: https://docs.python-requests.org/en/master/
 import shutil
 import subprocess
 import time
-from enum import Enum
 
-from requests.models import Response
+import cfg as configuration
 
 class API(Enum):
     GitHub = 1
@@ -180,11 +182,11 @@ def CloneProjects(api, api_url, api_user, api_token):
                 #else:
                 #    clone_url = project_url[0: 7:] + api_user + ":" + api_token + "@" + project_url[7:]
 
-                if not os.path.exists("repositories"): os.mkdir("repositories")
-                if not os.path.exists(f"repositories/{namespace}"): os.mkdir(f"repositories/{namespace}")
+                if not os.path.exists(f"{configuration.app_directory}/repositories"): os.mkdir(f"{configuration.app_directory}/repositories")
+                if not os.path.exists(f"{configuration.app_directory}/repositories/{namespace}"): os.mkdir(f"{configuration.app_directory}/repositories/{namespace}")
 
-                subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"repositories/{namespace}", shell=True)
-                subprocess.call(f"git lfs fetch --all", cwd=f"repositories/{namespace}/{project}", shell=True)
+                subprocess.call(f"git clone --mirror {clone_url} {project}", cwd=f"{configuration.app_directory}/repositories/{namespace}", shell=True)
+                subprocess.call(f"git lfs fetch --all", cwd=f"{configuration.app_directory}/repositories/{namespace}/{project}", shell=True)
 
 def CreateMirrorProjects(api, api_url, api_user, api_token, api_enabled):
     print(f"Creating Mirror Projects for {api.name}...")
@@ -213,9 +215,9 @@ def CreateMirrorProjects(api, api_url, api_user, api_token, api_enabled):
         return 1
 
     else:
-        for namespace in os.scandir("repositories/"):
+        for namespace in os.scandir(f"{configuration.app_directory}/repositories/"):
             namespace = namespace.name
-            for project in os.scandir(f"repositories/{namespace}"):
+            for project in os.scandir(f"{configuration.app_directory}/repositories/{namespace}"):
                 project = project.name
                 
                 if(api == API.GitHub):
@@ -329,13 +331,13 @@ def MirrorProjects(api, api_url, api_user, api_token, api_enabled):
             namespace = project_data[1][project_data[0].index(project_url)]
             project = project_data[2][project_data[0].index(project_url)]
 
-            if(os.path.exists(f"repositories/{namespace}/{project}")):
+            if(os.path.exists(f"{configuration.app_directory}/repositories/{namespace}/{project}")):
                 
                 mirror_url = project_url[0: 8:] + api_user + ":" + api_token + "@" + project_url[8:]
 
                 # Push LFS objects first, or pushing the mirror will fail.
-                subprocess.call(f"git lfs push --all {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
-                subprocess.call(f"git push --mirror {mirror_url}", cwd=f"repositories/{namespace}/{project}", shell=True)
+                subprocess.call(f"git lfs push --all {mirror_url}", cwd=f"{configuration.app_directory}/repositories/{namespace}/{project}", shell=True)
+                subprocess.call(f"git push --mirror {mirror_url}", cwd=f"{configuration.app_directory}/repositories/{namespace}/{project}", shell=True)
 
 def GetProject(api, url):
     # Return array of project http_url_to_repo (json)
@@ -349,5 +351,5 @@ def MirrorProject():
     print("MirrorProject() is not implemented.")
 
 def Cleanup():
-    if os.path.exists("repositories/"):
-        shutil.rmtree("repositories/")
+    if os.path.exists(f"{configuration.app_directory}/repositories/"):
+        shutil.rmtree(f"{configuration.app_directory}/repositories/")
