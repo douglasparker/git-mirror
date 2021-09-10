@@ -89,7 +89,7 @@ def GetProjects(api, api_url, api_user, api_token):
             return [project_urls, project_namespaces, project_names]
 
         elif(api == API.GitLab):
-            request = requests.get("https://gitlab.com/api/v4/projects?owned=true&pagination=keyset&per_page=100", headers = {"PRIVATE-TOKEN": f"{api_token}"})
+            request = requests.get("https://gitlab.com/api/v4/projects?owned=true&pagination=keyset&per_page=100&order_by=id&sort=asc", headers = {"PRIVATE-TOKEN": f"{api_token}"})
 
             print("HTTP Status: " + str(request.status_code) + " - " + request.url)
             print("HTTP Response: " + request.text)
@@ -114,7 +114,7 @@ def GetProjects(api, api_url, api_user, api_token):
             return [project_urls, project_namespaces, project_names]
 
         elif(api == API.GitLab_On_Premise):
-            request = requests.get(api_url + "/api/v4/projects?owned=true&pagination=keyset&per_page=100", headers = {"PRIVATE-TOKEN": f"{api_token}"})
+            request = requests.get(api_url + "/api/v4/projects?owned=true&pagination=keyset&per_page=100&order_by=id&sort=asc", headers = {"PRIVATE-TOKEN": f"{api_token}"})
 
             print("HTTP Status: " + str(request.status_code) + " - " + request.url)
             print("HTTP Response: " + request.text)
